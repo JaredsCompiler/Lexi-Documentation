@@ -1,0 +1,239 @@
+\documentclass{article}
+
+\usepackage{fancyvrb}
+\usepackage [english]{babel}
+\usepackage [autostyle, english = american]{csquotes}
+\usepackage{graphicx}
+\usepackage{hyperref}
+
+\MakeOuterQuote{"}
+\graphicspath{ {./assets} }
+
+\title{Lexi | Lexical Analyzer}
+\author{Jared Dyreson, Chris Nutter}
+\date{California State University, Fullerton}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduction}
+This project was intended to be a lexical analyzer for our compiler and was named "Lexi".
+The goal of Lexi is to parse out the contents of a source document and generate meaningful lexemes.
+These lexemes were to adhere to a specific set of regular expressions to define a token.
+
+\section{How to Use}
+
+All code is compiled under the latest version of "clang" and "g++".
+
+\begin{enumerate}
+		\item Use on a Unix-based operating system, preferably Linux
+		\item Clone the repository from \href{https://github.com/JaredsCompiler/Lexi}{\underline{here}}
+		\item Enter the directory named "Lexi"
+		\item Run 'make test' to conduct all the tests without having to present command line arguments
+\end{enumerate}
+
+\section{Design | Regular Expression}
+The way Lexi parses each line and determines the identifier type is through the use of regular expressions. 
+Being able to determine the identifier is crucial in defining the token's contents.
+Lexi after processing the file and creating a vector of strings that parses line by line which is then fed through a function that reads each character and determines one of the each lexeme types.
+
+\subsection{Comments}
+
+These are any sequence of characters enclosed by two exclamation marks, and can be embedded in a line with other code.
+Multiple comments in a line are supported.
+
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+(!.*!)
+\end{Verbatim}
+\end{figure}
+
+\newpage
+
+
+\subsection{Identifier}
+
+These are any sequence of characters and numbers starting with an alphanumeric.
+It should also be known that we must compare any identifier matched to a list of reserved words.
+These reserved words are not to be used as variable names as the are used for data types, control-flow operators, and other key-defining words for the language.
+This is only supported in this iteration because \emph{Flex} and \emph{Bison} do this quite well.
+
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+([a-zA-Z]+(\d*)?)
+\end{Verbatim}
+\end{figure}
+
+\subsection{Numbers}
+
+These are any integer like number, such as floating point and ordinary base 10 integers.
+Lexi also supports signed/unsigned numbers.
+
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+(?:\b)([-+]?\d*.?\d+)?(?=\b)
+\end{Verbatim}
+\end{figure}
+
+
+\subsection{Operators}
+
+\begin{flushleft}
+
+These operators should be broken down into two distinct categories:
+\begin{itemize}
+\item Unary
+\item Binary
+\end{itemize}
+
+Where the unary operator only takes in one argument and returns a value.
+The binary operator takes in two arguments and returns one value.
+\end{flushleft}
+
+\subsubsection{Binary | Comparators}
+\begin{flushleft}
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+(>|<|>=|<=|&&|||)
+\end{Verbatim}
+\end{figure}
+
+The operators supported here are as follows:
+\begin{itemize}
+\item Less than
+\item Less than or equal to
+\item Greater than
+\item Greater than or equal to
+\item Logical AND, OR
+\end{itemize}
+\end{flushleft}
+
+\subsubsection{Binary | Operands}
+\begin{flushleft}
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+(+|-|*|/|=|>|<|>=|<=|&|||%|^)
+\end{Verbatim}
+\end{figure}
+
+\begin{flushleft}
+The operators supported here are as follows:
+\begin{itemize}
+\item Addition
+\item Subtraction
+\item Multiplication
+\item Division
+\item Modulo
+\item Bitwise AND, OR, XOR
+\end{itemize}
+
+There is a subset of these binary operators that are exclusively used as comparators and deserve to be in their own separate category.
+
+\end{flushleft}
+
+
+\subsubsection{Unary}
+\begin{flushleft}
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+(^!$)
+\end{Verbatim}
+\end{figure}
+
+The only operator here is the invert/not operator, which will take in boolean value and return the inverse of it.
+For example, if the value is set to true and you apply the not operator, you will get false.
+\end{flushleft}
+
+\newpage
+
+
+\newpage
+
+\subsection{Separators}
+
+These symbols will typically enclose an expression that needs either be evaluated, contains string literals or separate multiple values of the same type.
+Here, it is easier to note the LHS (left hand side) and RHS (right hand side) variants of each separator, as they are important to distinguish in the beginning.
+
+\subsubsection{Brackets}
+
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+({)
+\end{Verbatim}
+\caption{LHS Bracket}
+\end{figure}
+
+
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+(})
+\end{Verbatim}
+\caption{RHS Bracket}
+\end{figure}
+
+\subsubsection{Comma}
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+(\,)
+\end{Verbatim}
+\caption{Comma Character}
+\end{figure}
+
+Identifiers are comma separated for things like instantiation for multiple variables of the same time.
+
+\newpage
+
+\subsubsection{Parenthesis}
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+(()
+\end{Verbatim}
+\caption{LHS Parenthesis}
+\end{figure}
+
+
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+())
+\end{Verbatim}
+\caption{RHS Parenthesis}
+\end{figure}
+
+
+\subsubsection{String Literals}
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+(\"|\')
+\end{Verbatim}
+\end{figure}
+
+These are expressions should contain alphanumeric characters enclosed by either single or double quotes.
+Single quotes should be used for single char like data member.
+Double quotes are string literals.
+
+\subsection{Terminators}
+
+These symbols signal the end of an expression.
+\begin{figure}[!htpb]
+\centering
+\begin{Verbatim}[frame=single]
+(\;|\$)
+\end{Verbatim}
+\end{figure}
+
+\end{flushleft}
+\end{document}
